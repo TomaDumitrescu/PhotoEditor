@@ -13,9 +13,6 @@ TARGETS=$(OBJS:%.o=%)
 build:
 	$(CC) -o image_editor $(SRCS) $(CFLAGS)
 
-pack:
-	zip -FSr 321CA_DumitrescuToma_Tema3.zip 'README' Makefile $(SRCS) $(H)
-
 clean:
 	rm -f $(TARGETS) $(OBJECTS)
 

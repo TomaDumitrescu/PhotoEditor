@@ -1,0 +1,99 @@
+<Copyright 2023> Dumitrescu Toma-Ioan
+Faculty of Automatic Control and Computer Science
+Groupe: 321CA
+
+Image editor:
+
+## Description:
+
+The program resembles a photo editor for the formats pgm and ppm, binary and
+text files, performing commands such as load, select, save, crop, equalize,
+histogram, apply filters. The memory is administered efficiently, so that
+there are no memory leaks (verified with valgrind debbuger).
+Launching the program: 1) make	2)./image_editor
+
+Verifying images:
+convert sample.jpg sample.ppm (binary file conversion for color image)
+convert sample.jpg -compress None sample.pgm (text file for grayscale image)
+
+## Implementation:
+
+Command menu: the operations are indentified from the command text read as a
+string. If there are more parameters, for that command, the parameters will be
+obtained using fget function to catch the whole line and verify the format.
+
+Image memorizing technique: for easy implementation and program adaptability,
+the magic number that indicates the format for image and the source file is
+retained as a local variable in main, being passed as parameter in all command
+functions. The selection x1, y1, x2, y2 that has the same memorization logic.
+To retain the image matrix, there are two matrices in the image structure,
+maximum one of them being allocated at a timestamp. If there is no image,
+the program handles to set the magic_number correctly to -1, determining easy
+memory management. For colored images, the structure pixel retains a 3-uple
+(r, g, b) for every pixel. A potential issue is max_val considered 255, but
+the program can be easily changed to a more general max_val. Also, the
+structure is not necessarily efficient, because of the padding, but the
+current implementation reduces the number of parameters and does not affect
+the overall functionality because of the non-complex inputs the program gets.
+
+Error handling: For each function, the magic number, the parameters line,
+the format of the parameters are the indicators of errors that are reported
+via stdout messages. Error priorities are set by looking at expected output.
+
+Load: a function that reads the image data from a file with the magic
+number in the set P2, P3, P5, P6. Firstly, the file is read as text to get
+the magic number, delete the current stored image if the command was valid
+(so no memory leaks related to image matrix), and ignore comments. The
+current position from the start is retained, pointing to the beggining of
+the matrix. If the file is found to be binary, the reading will start from
+the image matrix (the retained position), by opening the file with a new
+handler and calling fseek. In other case, the same text file is used. Each
+time a valid load is called, there is a function that allocates the matrix with
+the specific dimensions and types. The comments are read using fgets, but if
+the next line is with important data, then the data is extracted using sscanf.
+The cases when comments are between max_val and the matrix are neglected.
+
+Save function traverses the image data and prints it to a writable file F,
+attempting to create F if it does not exist.
+
+Histogram: Firstly, the frequency of each value in the image matrix is
+calculated. The bins signify the frequency segments in the interval [0 - 255],
+the frequency of a segment being the sum of all frequencies of the values
+appearing on that segment. The histogram is displayed using stars applying the
+histogram formula.
+
+Crop: Treating each case (colored, grayscale), the portion [x1, x2) intersected
+with [y1, y2) is cut from the image matrix, replacing the current image
+matrix. To avoid memory leaks, the original matrix is assigned to a double
+pointer and freed using that auxiliary pointer. After the replace and the free,
+the image dimensions are updated. The idea is to go with two loops, one for
+rows (i: y1 -> y2 - 1) and one for columns (j: x1 -> x2 - 1), allocate the
+new matrix with the dimensions of that selection, traverse the original matrix
+with those two iterators (i and j), then assign to the new matrix by
+substracting the initial displacement from 0 of the specific iterator.
+
+Select: Firstly, the whole selection case is verified, then verify if there is
+a specific set of coordinates. The parameters are checked to be integers so
+that atoi returns valid coordinates. An error here will be handled by the
+program with the reset of coordinates to the previous values, ending the
+function. Also, if there are more ore less numbers than needed, invalid command
+message will be printed. After that, the set is checked to be in bounds.
+
+Equalize: Regardless the selection, the equalize operation is performed on the
+whole image. Since in the formula for a new pixel p is used only the sum of
+the frequencies of values from 0 to p, then the frequency array will be a
+partial sum array with fq[p] += fq[0] + fq[1] + ... + fq[p - 1], where the
+fq[p] is initialized with the frequency of value p in the image. Since the
+image is rectangular, the area is the product of width and height. Every
+pixel is changed with a new pixel using an equalization formula.
+
+Apply: all apply operation types are done using change_pixels() function that
+effectively calculates the new pixels, by using the convolution of a 3x3
+submatrix centered on a pixel with the filter kernel image, then using round
+and clamp (0 for negative numbers, 255 for more than max_val values). The
+pixels on the border of the image (0 and last lines and columns) are left
+unchanged, the logic for that being in main apply function. Where no
+coefficients are used, the filter coefficient will be considered 1.0.
+
+## Bibliography:
+https://ocw.cs.pub.ro/courses/programare

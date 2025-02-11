@@ -92,6 +92,3 @@ and clamp (0 for negative numbers, 255 for more than max_val values). The
 pixels on the border of the image (0 and last lines and columns) are left
 unchanged, the logic for that being in main apply function. Where no
 coefficients are used, the filter coefficient will be considered 1.0.
-
-## Bibliography:
-https://ocw.cs.pub.ro/courses/programare
